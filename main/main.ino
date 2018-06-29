@@ -36,6 +36,14 @@ int drive_input2 = 2;
 int drive_input3 = 15;
 int drive_input4 = 13;
 
+void OLED_display(){
+    u8g2.clearBuffer();         // clear the internal memory
+    drawDateTime(6,25,5,31);
+    drawBP(132,5);
+    u8g2.sendBuffer();          // transfer internal memory to the display
+    delay(1000);
+}
+
 /*
  * 传入int的月份，日期，小时，分钟
  * 显示在显示屏顶上
@@ -64,127 +72,127 @@ void drawDateTime(int _mon, int _day, int _hour, int _min){
  * 非常dirty，勿修改
  */ 
 void drawBP(int h,int l){
-  int offset = 9;
-  int xPosition = 0;
-  String tempStr = "";
-
-  u8g2.setFont(u8g2_font_helvR08_tr); // choose a suitable font
-  tempStr = "Systolic";
-  xPosition = 0;
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    int offset = 9;
+    int xPosition = 0;
+    String tempStr = "";
   
-  offset = u8g2.getMaxCharHeight()+offset-2;
-  u8g2.setFont(u8g2_font_helvR24_tn ); // choose a suitable font
-  tempStr = h;
-  xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    u8g2.setFont(u8g2_font_helvR08_tr); // choose a suitable font
+    tempStr = "Systolic";
+    xPosition = 0;
+    u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    
+    offset = u8g2.getMaxCharHeight()+offset-2;
+    u8g2.setFont(u8g2_font_helvR24_tn ); // choose a suitable font
+    tempStr = h;
+    xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
+    u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    
+    offset = u8g2.getMaxCharHeight()+offset;
+    u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
+    tempStr = "mmHg";
+    xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
+    u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    
+    offset = u8g2.getMaxCharHeight()+offset+5;
+    u8g2.setFont(u8g2_font_helvR08_tr); // choose a suitable font
+    tempStr = "Diastolic";
+    xPosition = 0;
+    u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    
+    offset = u8g2.getMaxCharHeight()+offset-2;
+    u8g2.setFont(u8g2_font_helvR24_tn ); // choose a suitable font
+    tempStr = l;
+    xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
+    u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    
+    offset = u8g2.getMaxCharHeight()+offset;
+    u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
+    tempStr = "mmHg";
+    xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
+    u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
   
-  offset = u8g2.getMaxCharHeight()+offset;
-  u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
-  tempStr = "mmHg";
-  xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
-  
-  offset = u8g2.getMaxCharHeight()+offset+5;
-  u8g2.setFont(u8g2_font_helvR08_tr); // choose a suitable font
-  tempStr = "Diastolic";
-  xPosition = 0;
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
-  
-  offset = u8g2.getMaxCharHeight()+offset-2;
-  u8g2.setFont(u8g2_font_helvR24_tn ); // choose a suitable font
-  tempStr = l;
-  xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
-  
-  offset = u8g2.getMaxCharHeight()+offset;
-  u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
-  tempStr = "mmHg";
-  xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
-
-  u8g2.drawBox(0,125,20,3);
-  u8g2.drawBox(21,125,20,3);
-  u8g2.drawBox(42,125,20,3);
-  u8g2.setDrawColor(2);
-  u8g2.drawHLine(1,126,18);
-  u8g2.drawHLine(43,126,18);
-  }
+    u8g2.drawBox(0,125,20,3);
+    u8g2.drawBox(21,125,20,3);
+    u8g2.drawBox(42,125,20,3);
+    u8g2.setDrawColor(2);
+    u8g2.drawHLine(1,126,18);
+    u8g2.drawHLine(43,126,18);
+}
 
 /*
  * 显示心率
  * 非常dirty，勿修改
  */
 void drawHR(){
-  int offset = 9;
-  int xPosition = 0;
-  String tempStr = "";
-
-  u8g2.setFont(u8g2_font_helvR08_tr); // choose a suitable font
-  tempStr = "Heart Rate";
-  xPosition = 0;
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    int offset = 9;
+    int xPosition = 0;
+    String tempStr = "";
   
-  offset = u8g2.getMaxCharHeight()+offset-2;
-  u8g2.setFont(u8g2_font_helvR24_tn ); // choose a suitable font
-  tempStr = "83";
-  xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    u8g2.setFont(u8g2_font_helvR08_tr); // choose a suitable font
+    tempStr = "Heart Rate";
+    xPosition = 0;
+    u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    
+    offset = u8g2.getMaxCharHeight()+offset-2;
+    u8g2.setFont(u8g2_font_helvR24_tn ); // choose a suitable font
+    tempStr = "83";
+    xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
+    u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    
+    offset = u8g2.getMaxCharHeight()+offset;
+    u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
+    tempStr = "/min";
+    xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
+    u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
   
-  offset = u8g2.getMaxCharHeight()+offset;
-  u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
-  tempStr = "/min";
-  xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
-
-  u8g2.drawBox(0,125,20,3);
-  u8g2.drawBox(21,125,20,3);
-  u8g2.drawBox(42,125,20,3);
-  u8g2.setDrawColor(2);
-  u8g2.drawHLine(1,126,18);
-  u8g2.drawHLine(22,126,18);
-  }
+    u8g2.drawBox(0,125,20,3);
+    u8g2.drawBox(21,125,20,3);
+    u8g2.drawBox(42,125,20,3);
+    u8g2.setDrawColor(2);
+    u8g2.drawHLine(1,126,18);
+    u8g2.drawHLine(22,126,18);
+}
 
 /*
  *非常dirty，勿修改
  */
 void drawHistory(){
-  int offset = 9;
-  int xPosition = 0;
-  String tempStr = "";
-
-  u8g2.setFont(u8g2_font_helvR08_tr); // choose a suitable font
-  tempStr = "History";
-  xPosition = 0;
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    int offset = 9;
+    int xPosition = 0;
+    String tempStr = "";
   
-  offset = u8g2.getMaxCharHeight()+offset-2;
-  u8g2.drawHLine(0,offset+5,64);
-  
-  u8g2.setFont(u8g2_font_5x7_tf); // choose a suitable font
-  offset = offset+7;
-  for(int i=0;i<5;i++){
-  tempStr = "06-25 19:44";
-  xPosition = 0;
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
-  
-  offset = u8g2.getMaxCharHeight()+offset+1;
-  tempStr = "188/88 120";
-  xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
-  u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
-  
-  offset = u8g2.getMaxCharHeight()+offset-2;
-  u8g2.drawHLine(0,offset+5,64);
-  offset = offset+7;
+    u8g2.setFont(u8g2_font_helvR08_tr); // choose a suitable font
+    tempStr = "History";
+    xPosition = 0;
+    u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+    
+    offset = u8g2.getMaxCharHeight()+offset-2;
+    u8g2.drawHLine(0,offset+5,64);
+    
+    u8g2.setFont(u8g2_font_5x7_tf); // choose a suitable font
+    offset = offset+7;
+    for(int i=0;i<5;i++){
+        tempStr = "06-25 19:44";
+        xPosition = 0;
+        u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+        
+        offset = u8g2.getMaxCharHeight()+offset+1;
+        tempStr = "188/88 120";
+        xPosition = 63-u8g2.getStrWidth(tempStr.c_str());
+        u8g2.drawStr(xPosition,u8g2.getMaxCharHeight()+offset,tempStr.c_str());  // write something to the internal memory
+        
+        offset = u8g2.getMaxCharHeight()+offset-2;
+        u8g2.drawHLine(0,offset+5,64);
+        offset = offset+7;
     }
 
-  u8g2.drawBox(0,125,20,3);
-  u8g2.drawBox(22,125,20,3);
-  u8g2.drawBox(44,125,20,3);
-  u8g2.setDrawColor(2);
-  u8g2.drawHLine(45,126,18);
-  u8g2.drawHLine(23,126,18);
-  }
+    u8g2.drawBox(0,125,20,3);
+    u8g2.drawBox(22,125,20,3);
+    u8g2.drawBox(44,125,20,3);
+    u8g2.setDrawColor(2);
+    u8g2.drawHLine(45,126,18);
+    u8g2.drawHLine(23,126,18);
+}
 
 /*
  * 输入压力和波形值
@@ -298,6 +306,8 @@ float transfer_v2p(float v){
 
 
 void setup(void) {
+    //显示屏的setup
+    u8g2.begin(0,23,2,3,4,5);
     //serial的setup
     Serial.begin(115200);
     //ADC的setup
@@ -348,7 +358,7 @@ void loop(void){
     // 开两个数组存储数据
     int wave_data[DATA_ARRAY_SIZE];
     float pressure_data[DATA_ARRAY_SIZE];
-
+    OLED_display();
     /*
      * 打气功能
      * 打到TARGET_PRESSURE就停下
@@ -373,5 +383,6 @@ void loop(void){
             delay(SAMPLING_DELAY);
         }
         quick_deflate_for_x_ms(QUICK_DEF_TIME);
+        
   }
 }
