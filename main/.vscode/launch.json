@@ -1,0 +1,42 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Arduino",
+            "type": "arduino",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}",
+            "MIMode": "gdb",
+            "targetArchitecture": "arm",
+            "miDebuggerPath": "",
+            "debugServerPath": "",
+            "debugServerArgs": "",
+            "customLaunchSetupCommands": [
+                {
+                    "text": "target remote localhost:3333"
+                },
+                {
+                    "text": "file \"${file}\""
+                },
+                {
+                    "text": "load"
+                },
+                {
+                    "text": "monitor reset halt"
+                },
+                {
+                    "text": "monitor reset init"
+                }
+            ],
+            "stopAtEntry": true,
+            "serverStarted": "Info\\ :\\ [\\w\\d\\.]*:\\ hardware",
+            "launchCompleteCommand": "exec-continue",
+            "filterStderr": true,
+            "args": []
+        }
+    ]
+}
