@@ -2,6 +2,6 @@
 
 We used the MPX5050GP model pressure sensor. The pressure signal from the pressure sensor can be directly used as the current blood pressure value. The pulse wave signal obtained from this simulation circuit is used to find the corresponding systolic pressure and diastolic pressure.
 
-![alt text](images/µçÂ·.png "µçÂ·")
-![alt text](images/µÍÍ¨½ØÖ¹ÆµÂÊ.png "µÍÍ¨½ØÖ¹ÆµÂÊ")
-![alt text](images/¸ßÍ¨½ØÖ¹ÆµÂÊ.png "¸ßÍ¨½ØÖ¹ÆµÂÊ")
+![alt text](images/ç”µè·¯.png "ç”µè·¯")
+![alt text](images/ä½é€šæˆªæ­¢é¢‘ç‡.png "ä½é€šæˆªæ­¢é¢‘ç‡")
+![alt text](images/é«˜é€šæˆªæ­¢é¢‘ç‡.png "é«˜é€šæˆªæ­¢é¢‘ç‡")
