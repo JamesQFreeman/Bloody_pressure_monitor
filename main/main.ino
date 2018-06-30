@@ -4,6 +4,32 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 
+/*
+ * 定义测量过程中的各个参数
+ *
+ * ---------------以下参数可以修改---------------
+ * DEFLATION_TIME 表示缓慢放气，也就是测量的时间
+ * TARGET_PRESSURE 表示充气的时候的目标充气气压
+ * QUICK_DEF_TIME 表示快速放气的时间 ms单位
+ * 
+ * ---------------以下参数不建议修改-------------
+ * _SAMPLING_RATE 采样率 每秒采样次数
+ * _STEP_TIME 每次充气时长 ms单位
+ */ 
+#define DEFLATION_TIME 10
+#define TARGET_PRESSURE 180
+#define _SAMPLING_RATE 100
+#define _STEP_TIME 100
+#define QUICK_DEF_TIME 20000
+// 确定要采集几个数据点
+#define DATA_ARRAY_SIZE (DEFLATION_TIME*_SAMPLING_RATE)
+// 循环里每采样后的一次delay
+#define SAMPLING_DELAY (1000/_SAMPLING_RATE)
+
+// 开两个数组存储数据
+int wave_data[DATA_ARRAY_SIZE];
+float pressure_data[DATA_ARRAY_SIZE];
+
 
 /*
  * OLED显示屏定义
@@ -37,18 +63,25 @@ int drive_input2 = 2;
 int drive_input3 = 15;
 int drive_input4 = 13;
 
+void OLED_display_default(){
+    u8g2.clearBuffer();         // clear the internal memory
+    drawDateTime(0, 0, 0, 0);
+    drawBP(0,0);
+    u8g2.sendBuffer();          // transfer internal memory to the display
+    delay(1000);
+}
 /*
  * OLED显示函数
  * 传入6个int参数，分别是月，日，小时，分钟
  * 还有收缩压和舒张压
  */
-void OLED_display(int mon, int day, int hour, int mint,
+void OLED_display(int _mon, int _day, int _hour, int _min,
                   int systolic, int diastolic){
     u8g2.clearBuffer();         // clear the internal memory
-    drawDateTime(mon, day, hour, mint);
+    drawDateTime(_mon, _day, _hour, _min);
     drawBP(systolic,diastolic);
     u8g2.sendBuffer();          // transfer internal memory to the display
-    delay(100);
+    delay(1000);
 }
 
 /*
@@ -319,7 +352,7 @@ float average_pressure(float pres[], int wave[], size_t size){
     int max_wave = 0;
     float avg_pres = 0;
     for(int counter=0; counter < size; counter++){
-        if(wave[counter]>max){
+        if(wave[counter]>max_wave){
             max_wave = wave[counter];
             avg_pres = pres[counter];
         }
@@ -356,32 +389,7 @@ void loop(void){
     float pres = transfer_v2p(transfer_adc2v(adc_pressure));
     serial_display_pressure_and_wave(pres,0);
 
-    /*
-     * 定义测量过程中的各个参数
-     *
-     * ---------------以下参数可以修改---------------
-     * DEFLATION_TIME 表示缓慢放气，也就是测量的时间
-     * TARGET_PRESSURE 表示充气的时候的目标充气气压
-     * QUICK_DEF_TIME 表示快速放气的时间 ms单位
-     * 
-     * ---------------以下参数不建议修改-------------
-     * _SAMPLING_RATE 采样率 每秒采样次数
-     * _STEP_TIME 每次充气时长 ms单位
-     */ 
-    const int DEFLATION_TIME = 10;
-    const int TARGET_PRESSURE = 180;
-    const int _SAMPLING_RATE = 100;
-    const int _STEP_TIME = 100;
-    const int QUICK_DEF_TIME = 20000;
-    // 确定要采集几个数据点
-    int DATA_ARRAY_SIZE = (DEFLATION_TIME*_SAMPLING_RATE);
-    // 循环里每采样后的一次delay
-    int SAMPLING_DELAY = 1000/_SAMPLING_RATE;
-
-    // 开两个数组存储数据
-    int wave_data[DATA_ARRAY_SIZE];
-    float pressure_data[DATA_ARRAY_SIZE];
-    OLED_display(6,30,13,5,0,0);
+    OLED_display_default();
     /*
      * 打气功能
      * 打到TARGET_PRESSURE就停下
@@ -411,7 +419,7 @@ void loop(void){
             serial_display_pressure_and_wave(pres,magic_adc_wave);
             delay(SAMPLING_DELAY);
         }
-        float avg_pres = average_pressure(pressure_data[], wave_data[]);
+        float avg_pres = average_pressure(pressure_data, wave_data, DATA_ARRAY_SIZE);
         float fake_sys_pres = avg_pres*1.2;
         float fake_dia_pres = avg_pres*0.7;
         int sys_pres = (int)fake_sys_pres;
@@ -420,3 +428,5 @@ void loop(void){
         quick_deflate_for_x_ms(QUICK_DEF_TIME);
   }
 }
+
+
