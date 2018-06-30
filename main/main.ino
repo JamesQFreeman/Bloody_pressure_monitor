@@ -17,7 +17,7 @@
  * _STEP_TIME 每次充气时长 ms单位
  */ 
 #define DEFLATION_TIME 10
-#define TARGET_PRESSURE 180
+#define TARGET_PRESSURE 140
 #define _SAMPLING_RATE 100
 #define _STEP_TIME 100
 #define QUICK_DEF_TIME 20000
@@ -424,7 +424,7 @@ void loop(void){
         float fake_dia_pres = avg_pres*0.7;
         int sys_pres = (int)fake_sys_pres;
         int dia_pres = (int)fake_dia_pres;
-        OLED_display(6,30,13,5,sys_pres,dia_pres);
+        OLED_display(6,30,13,5,sys_pres/2,dia_pres/2);
         quick_deflate_for_x_ms(QUICK_DEF_TIME);
   }
 }
