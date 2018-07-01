@@ -22,7 +22,7 @@ This procedure has 2 steps:
 2. Deflating air: The fast-vent valve will open after the MCU gained enough datas.
 
 ## Blood pressure measurement
-The algorithm is: Oscillametric method.
+The algorithm is Oscillametric method.
 
 ![alt text](images/微信图片_20180629215533.jpg  "Title")
 
