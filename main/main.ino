@@ -7,7 +7,17 @@
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
 
+/*
+ * 初始化wifi连接单元
+ */
 WiFiMulti wifiMulti;
+
+
+/*
+ * 服务器地址
+ */
+#define SERVER_ADDR "http://192.168.137.1:5000/data"
+
 /*
  * 定义测量过程中的各个参数
  *
@@ -20,8 +30,8 @@ WiFiMulti wifiMulti;
  * _SAMPLING_RATE 采样率 每秒采样次数
  * _STEP_TIME 每次充气时长 ms单位
  */ 
-#define DEFLATION_TIME 10
-#define TARGET_PRESSURE 140
+#define DEFLATION_TIME 6
+#define TARGET_PRESSURE 160
 #define _SAMPLING_RATE 100
 #define _STEP_TIME 100
 #define QUICK_DEF_TIME 20000
@@ -364,27 +374,41 @@ float average_pressure(float pres[], int wave[], size_t size){
     return avg_pres;
 }
 
+float send_data_array(int wave[], size_t arr_size){
+    Serial.println("Start to send the whole array");
+    HTTPClient http;
+    http.begin(SERVER_ADDR);
+    for(int i = 0; i < arr_size; i++){
+        if(i%5==0)
+            http.POST("Temperature="+String(wave[i])+".0&Step=1999&Fat=9.1");
+        delay(SAMPLING_DELAY);
+    }
+    http.end();
+}
+
 
 void setup(void) {
-    //显示屏的setup
+    // 显示屏的setup
     u8g2.begin(0,23,2,3,4,5);
-    //serial的setup
+    // serial的setup
     Serial.begin(115200);
-    //ADC的setup
+    // ADC的setup
     ads.begin();
-    //电机驱动板的setup
+    // 电机驱动板的setup
     pinMode(drive_input1,OUTPUT);
     pinMode(drive_input2,OUTPUT);
     pinMode(drive_input3,OUTPUT);
     pinMode(drive_input4,OUTPUT);
+
+    // wifi setup
     for(uint8_t t = 4; t > 0; t--) {
-        Serial.printf("[SETUP] WAIT %d...\n", t);
+        Serial.printf("[WIFI SETUP] WAIT %d...\n", t);
         Serial.flush();
         delay(1000);
     }
-    wifiMulti.addAP("XZ1", "testtest");
+    wifiMulti.addAP("hotspot", "whatapwd");
     while(wifiMulti.run() != WL_CONNECTED){
-        Serial.println("waiting for connect");
+        Serial.println("waiting for connect...");
     }
 }
 
@@ -401,8 +425,6 @@ void loop(void){
     float pres = transfer_v2p(transfer_adc2v(adc_pressure));
     serial_display_pressure_and_wave(pres,0);
     
-    HTTPClient http;
-    http.begin("http://219.216.66.113:5000/data");
 
     OLED_display_default();
     /*
@@ -439,8 +461,10 @@ void loop(void){
         // 把信号存在两个数组中。
         wave_data[counter] = magic_adc_wave;
         pressure_data[counter] = pres;
-        if(counter%5==0)
-            //http.POST("Temperature="+String(magic_adc_wave)+".0&Step=1999&Fat=9.1");
+        //if(counter%5==0)
+        //Serial.print("WiFi data sending");
+        //http.POST("Temperature="+String(magic_adc_wave)+".0&Step=1999&Fat=9.1");
+        //Serial.print("WiFi data sent");
         //显示 pressure和wave，中间用逗号隔开，显示两条曲线
         serial_display_pressure_and_wave(pres,magic_adc_wave);
         delay(SAMPLING_DELAY);
@@ -450,9 +474,9 @@ void loop(void){
     float fake_dia_pres = avg_pres*0.7;
     int sys_pres = (int)fake_sys_pres;
     int dia_pres = (int)fake_dia_pres;
-    OLED_display(6,30,13,5,sys_pres/2,dia_pres/2);
+    OLED_display(6,30,13,5,sys_pres,dia_pres);
+    send_data_array(wave_data,DATA_ARRAY_SIZE);
     quick_deflate_for_x_ms(QUICK_DEF_TIME);
-    http.end();
 }
 
 
