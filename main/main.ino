@@ -3,7 +3,11 @@
 #include <string.h>
 #include <Arduino.h>
 #include <U8g2lib.h>
+#include <WiFi.h>
+#include <WiFiMulti.h>
+#include <HTTPClient.h>
 
+WiFiMulti wifiMulti;
 /*
  * 定义测量过程中的各个参数
  *
@@ -373,6 +377,15 @@ void setup(void) {
     pinMode(drive_input2,OUTPUT);
     pinMode(drive_input3,OUTPUT);
     pinMode(drive_input4,OUTPUT);
+    for(uint8_t t = 4; t > 0; t--) {
+        Serial.printf("[SETUP] WAIT %d...\n", t);
+        Serial.flush();
+        delay(1000);
+    }
+    wifiMulti.addAP("XZ1", "testtest");
+    while(wifiMulti.run() != WL_CONNECTED){
+        Serial.println("waiting for connect");
+    }
 }
 
 void loop(void){
@@ -380,7 +393,6 @@ void loop(void){
     int16_t adc_wave, adc_pressure;
     //从adc中读取压力信号
     adc_pressure = ads.readADC_SingleEnded(PRES_SIG);
-
     /*
      * 定义pres为此时的压强值
      * 显示的数据为
@@ -388,6 +400,9 @@ void loop(void){
      */ 
     float pres = transfer_v2p(transfer_adc2v(adc_pressure));
     serial_display_pressure_and_wave(pres,0);
+    
+    HTTPClient http;
+    http.begin("http://219.216.66.113:5000/data");
 
     OLED_display_default();
     /*
@@ -395,38 +410,49 @@ void loop(void){
      * 打到TARGET_PRESSURE就停下
      * _STEP_TIME控制每一次打气时间，ms单位
      */
-    if(pres<TARGET_PRESSURE){
+     
+    while(pres<TARGET_PRESSURE){
+        //从adc中读取压力信号
+        adc_pressure = ads.readADC_SingleEnded(PRES_SIG);
+        /*
+         * 定义pres为此时的压强值
+         * 显示的数据为
+         * “压强值,0\n”
+         */ 
+        pres = transfer_v2p(transfer_adc2v(adc_pressure));
+        serial_display_pressure_and_wave(pres,0);
         inflate_for_x_ms(_STEP_TIME);
     }
     /*
      * 完成打气
      * 并在完成打气之后完成显示功能和记录功能
      */
-    else{
-        closeM1_closeM2();
-        // 获取数据DATA_ARRAY_SIZE次
-        int magic_adc_wave;
-        for(int counter = 0; counter < DATA_ARRAY_SIZE; counter++){
-            int adc_wave = ads.readADC_SingleEnded(WAVE_SIG);
-            adc_pressure = ads.readADC_SingleEnded(PRES_SIG);
-            pres = transfer_v2p(transfer_adc2v(adc_pressure));
-            // 处理原来的脉搏波信号，使其好看一些。
-            magic_adc_wave = pure_magic(adc_wave,counter);
-            // 把信号存在两个数组中。
-            wave_data[counter] = magic_adc_wave;
-            pressure_data[counter] = pres;
-            //显示 pressure和wave，中间用逗号隔开，显示两条曲线
-            serial_display_pressure_and_wave(pres,magic_adc_wave);
-            delay(SAMPLING_DELAY);
-        }
-        float avg_pres = average_pressure(pressure_data, wave_data, DATA_ARRAY_SIZE);
-        float fake_sys_pres = avg_pres*1.2;
-        float fake_dia_pres = avg_pres*0.7;
-        int sys_pres = (int)fake_sys_pres;
-        int dia_pres = (int)fake_dia_pres;
-        OLED_display(6,30,13,5,sys_pres/2,dia_pres/2);
-        quick_deflate_for_x_ms(QUICK_DEF_TIME);
-  }
+    closeM1_closeM2();
+    // 获取数据DATA_ARRAY_SIZE次
+    int magic_adc_wave;
+    for(int counter = 0; counter < DATA_ARRAY_SIZE; counter++){
+        int adc_wave = ads.readADC_SingleEnded(WAVE_SIG);
+        adc_pressure = ads.readADC_SingleEnded(PRES_SIG);
+        pres = transfer_v2p(transfer_adc2v(adc_pressure));
+        // 处理原来的脉搏波信号，使其好看一些。
+        magic_adc_wave = pure_magic(adc_wave,counter);
+        // 把信号存在两个数组中。
+        wave_data[counter] = magic_adc_wave;
+        pressure_data[counter] = pres;
+        if(counter%5==0)
+            //http.POST("Temperature="+String(magic_adc_wave)+".0&Step=1999&Fat=9.1");
+        //显示 pressure和wave，中间用逗号隔开，显示两条曲线
+        serial_display_pressure_and_wave(pres,magic_adc_wave);
+        delay(SAMPLING_DELAY);
+    }
+    float avg_pres = average_pressure(pressure_data, wave_data, DATA_ARRAY_SIZE);
+    float fake_sys_pres = avg_pres*1.2;
+    float fake_dia_pres = avg_pres*0.7;
+    int sys_pres = (int)fake_sys_pres;
+    int dia_pres = (int)fake_dia_pres;
+    OLED_display(6,30,13,5,sys_pres/2,dia_pres/2);
+    quick_deflate_for_x_ms(QUICK_DEF_TIME);
+    http.end();
 }
 
 
