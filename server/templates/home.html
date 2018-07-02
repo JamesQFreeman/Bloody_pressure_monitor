@@ -7,87 +7,13 @@
     <script type="text/javascript">
         $(function () {
             $(document).ready(function () {
-                Highcharts.setOptions({
-                    global: {
-                        useUTC: false
-                    }
-                });
-
-                var chart;
-                $('#container').highcharts({
-                    chart: {
-                        type: 'spline',
-                        animation: Highcharts.svg, // don't animate in old IE               
-                        marginRight: 10,
-                        events: {
-                            load: function () {
-
-                                // set up the updating of the chart each second             
-                                var series = this.series[0];
-                                setInterval(function () {
-                                    var x = (new Date()).getTime(); // current time
-                                    var y;
-                                    $.ajax({type: 'GET',
-                                        async: false,
-                                        url:"/data_temperature",
-                                        dataType:'json',
-                                        success:function(data)
-                                        {
-                                            y = Number(data['Temperature'])
-                                        }});
-                                    series.addPoint([x, y], true, true);
-                                }, 500);
-                            }
-                        }
-                    },
-                    title: {
-                        text: ' '
-                    },
-                    xAxis: {
-                        type: 'datetime',
-                        tickPixelInterval: 100
-                    },
-                    yAxis: {
-                        title: {
-                            text: 'Body Temperature Chart--1 second'
-                        },
-                        plotLines: [{
-                            value: 0,
-                            width: 1,
-                            color: '#808080'
-                        }]
-                    },
-                    tooltip: {
-                        formatter: function () {
-                            return '<b>' + this.series.name + '</b><br/>' +
-                                Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
-                                Highcharts.numberFormat(this.y, 2);
-                        }
-                    },
-                    legend: {
-                        enabled: false
-                    },
-                    exporting: {
-                        enabled: false
-                    },
-                    series: [{
-                        name: 'Temperature data',
-                        data: (function () {
-                            // generate an array of random data                             
-                            var data = [],
-                                time = (new Date()).getTime(),
-                                i;
-
-                            for (i = -19; i <= 0; i++) {
-                                data.push({
-                                    x: time + i * 1000,
-                                    y: 36.75 + Math.random() / 10.0
-                                });
-                            }
-                            return data;
-                        })()
-                    }]
-                });
+                setInterval(function() {
+                    $.get("http://localhost:5000/data", function(data) {
+                        console.log(data);
+                        $("#dia").text(data['dia']);
+                        $("#sys").text(data['sys']);
+                    })
+                }, 1000);
             });
 
         });               
@@ -113,7 +39,7 @@
             </ul>
             <ul class="nav navbar-nav">
                 <li>
-                    <a href="/group19">Group 19</a>
+                    <a href="/group19">Group OpenSphygmomanometer</a>
                 </li>
             </ul>
         </div>
@@ -126,42 +52,29 @@
     </div>
     <div>
         <div class="panel panel-default" style="width:500px; float:left;">
-            <div class="panel-heading">Basic Imformation</div>
+            <div class="panel-heading">Basic Information</div>
             <div>
                 <table class="table" style="width: 480px; margin:0px 10px;">
-                    <tr><td>name: {{ name|capitalize }}</td><td>nickname: SB</td></tr>
-                    <tr><td>age: 20</td><td>gender: male</td></tr>
-                    <tr><td>height: 170cm</td><td>weight: 54kg</td></tr>
+                    <tr><td>Name: {{ name|capitalize }}</td><td>Medical History: N/A</td></tr>
+                    <tr><td>Age: 20</td><td>Gender: male</td></tr>
+                    <tr><td>Height: 170cm</td><td>Weight: 54kg</td></tr>
                 </table>
             </div>
         </div>
         <div class="panel panel-default" style="float:left; width:153px; height:153px; position: relative; left:30px;" id="step">
             <div class="panel-heading" style="text-align: center">
-                <a href="/home/{{ name }}/step">Step Number</a>
+                <a href="/home/{{ name }}/step">Systolic pressure</a>
             </div>
             <div class="panel-body" style="text-align: center">
-                <h1>
-                    <script>
-                        var Step;
-                        $.ajax({type: 'GET',
-                            async: false,
-                            url:"/data_step",
-                            dataType:'json',
-                            success:function(data)
-                            {
-                                Step = Number(data['Step'])
-                            }});
-                        document.write(Step);
-                    </script>
-                </h1>
+                <h1 id="sys">n/a</h1>
             </div>
         </div>
         <div class="panel panel-default" style="float:left; width:153px; height:153px; position: relative; left:60px;" id="fat">
             <div class="panel-heading" style="text-align: center">
-                <a href="/home/{{ name }}/fat">Fat</a>
+                <a href="/home/{{ name }}/fat">Diastolic pressure</a>
             </div>
             <div class="panel-body" style="text-align: center">
-                <h1>9.7%</h1>
+                <h1 id="dia">n/a</h1>
             </div>
         </div>
         <div class="panel panel-default" style="float:left; width:245px; height:153px; position: relative; left:90px;" id="GPS">
