@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, jsonify
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
-
+from time 
 import json
+
 app = Flask(__name__)
 app.config['BOOTSTRAP_SERVE_LOCAL'] = True
 Bootstrap(app)
@@ -46,6 +47,8 @@ def data_get():
         s = str(request.get_data(), encoding = 'utf-8');
         fuck = s.split(',')
         data = {'sys': fuck[0], 'dia': fuck[1]}
+        db_str = s+','+time.strftime
+        open('database.csv','a').write()
         return 'ok'
     if request.method == 'GET':
         return jsonify(data)
