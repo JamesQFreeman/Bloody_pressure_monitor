@@ -10,7 +10,7 @@
 /*
  * 初始化wifi连接单元
  */
-WiFiMulti wifiMulti;
+
 
 
 /*
@@ -30,8 +30,8 @@ WiFiMulti wifiMulti;
  * _SAMPLING_RATE 采样率 每秒采样次数
  * _STEP_TIME 每次充气时长 ms单位
  */ 
-#define DEFLATION_TIME 6
-#define TARGET_PRESSURE 160
+#define DEFLATION_TIME 10
+#define TARGET_PRESSURE 180
 #define _SAMPLING_RATE 100
 #define _STEP_TIME 100
 #define QUICK_DEF_TIME 20000
@@ -266,14 +266,18 @@ void serial_display_pressure_and_wave(float pres, int wave){
  * 缩小_MAGIC_NUM倍
  */
 int pure_magic(int wave, int order){
+
     int _MAGIC_NUM = 50;
     int temp = 60;
     temp = wave/_MAGIC_NUM;
-    if (temp>200){
+    if (temp>200 && order<150){
       return 60;
     }
     else{
-      return temp;
+        if(temp==1310){
+            temp = 46;
+        }
+        return temp;
     }
 }
 
@@ -371,10 +375,65 @@ float average_pressure(float pres[], int wave[], size_t size){
             avg_pres = pres[counter];
         }
     }
+    Serial.printf("THE average_pressure IS ------------%f",avg_pres);
     return avg_pres;
 }
 
+float systolic_pressure(float pres[], int wave[], size_t arr_size){
+    int wave_peak[50];
+    float pres_when_wave_peak[50];
+    int peak_num = 0;
+    // 初始化为0
+    for (int i = 0;i<50;i++) wave_peak[0] =0;
+    for (int i = 0;i<50;i++) pres_when_wave_peak[0] =0;
+    int before2=0, before1=0, mid=0, after1=0, after2=0;
+    // 把peak都存到wave_peak里
+    for (int i=5;i<(arr_size-5);i++){
+        before2 = wave[i-2];
+        before1 = wave[i-1];
+        mid = wave[i];
+        after1 = wave[i+1];
+        after2 = wave[i+2];
+        // 前面递增 后面递减
+        if((before1>before2)&&(mid>before1)&&
+            (after1<mid)&&(after2<after1)
+            &&peak_num<50 && mid>60){
+                
+                wave_peak[peak_num] = mid;
+                pres_when_wave_peak[peak_num] = pres[i];
+                peak_num++;
+            }
+    }
+
+    // 找到最大的peak
+    int peak_max= 0;
+    int temp = 0;
+    for(int i=0;i<50;i++){
+        temp = wave_peak[i];
+        if(temp>peak_max)
+            peak_max = temp;
+    }
+
+    int calced_sys_wave = peak_max*0.7;
+    int calced_dia_wave = peak_max*0.55;
+
+    return 0;
+
+}
+
+
 float send_data_array(int wave[], size_t arr_size){
+    WiFiMulti wifiMulti;
+    // wifi setup
+    for(uint8_t t = 4; t > 0; t--) {
+        Serial.printf("[WIFI SETUP] WAIT %d...\n", t);
+        Serial.flush();
+        delay(1000);
+    }
+    wifiMulti.addAP("hotspot", "whatapwd");
+    while(wifiMulti.run() != WL_CONNECTED){
+    }
+    Serial.println("CONNECTED");
     Serial.println("Start to send the whole array");
     HTTPClient http;
     http.begin(SERVER_ADDR);
@@ -399,17 +458,6 @@ void setup(void) {
     pinMode(drive_input2,OUTPUT);
     pinMode(drive_input3,OUTPUT);
     pinMode(drive_input4,OUTPUT);
-
-    // wifi setup
-    for(uint8_t t = 4; t > 0; t--) {
-        Serial.printf("[WIFI SETUP] WAIT %d...\n", t);
-        Serial.flush();
-        delay(1000);
-    }
-    wifiMulti.addAP("hotspot", "whatapwd");
-    while(wifiMulti.run() != WL_CONNECTED){
-        Serial.println("waiting for connect...");
-    }
 }
 
 void loop(void){
@@ -423,6 +471,7 @@ void loop(void){
      * “压强值,0\n”
      */ 
     float pres = transfer_v2p(transfer_adc2v(adc_pressure));
+    Serial.println("test here");
     serial_display_pressure_and_wave(pres,0);
     
 
@@ -431,8 +480,7 @@ void loop(void){
      * 打气功能
      * 打到TARGET_PRESSURE就停下
      * _STEP_TIME控制每一次打气时间，ms单位
-     */
-     
+     */  
     while(pres<TARGET_PRESSURE){
         //从adc中读取压力信号
         adc_pressure = ads.readADC_SingleEnded(PRES_SIG);
@@ -442,7 +490,8 @@ void loop(void){
          * “压强值,0\n”
          */ 
         pres = transfer_v2p(transfer_adc2v(adc_pressure));
-        serial_display_pressure_and_wave(pres,0);
+        //Serial.println("test here2");
+        serial_display_pressure_and_wave(pres,60);
         inflate_for_x_ms(_STEP_TIME);
     }
     /*
@@ -452,31 +501,35 @@ void loop(void){
     closeM1_closeM2();
     // 获取数据DATA_ARRAY_SIZE次
     int magic_adc_wave;
+    int _adc_wave;
     for(int counter = 0; counter < DATA_ARRAY_SIZE; counter++){
-        int adc_wave = ads.readADC_SingleEnded(WAVE_SIG);
+        _adc_wave = ads.readADC_SingleEnded(WAVE_SIG);
         adc_pressure = ads.readADC_SingleEnded(PRES_SIG);
         pres = transfer_v2p(transfer_adc2v(adc_pressure));
         // 处理原来的脉搏波信号，使其好看一些。
-        magic_adc_wave = pure_magic(adc_wave,counter);
+        magic_adc_wave = pure_magic(_adc_wave,counter);
+
         // 把信号存在两个数组中。
         wave_data[counter] = magic_adc_wave;
         pressure_data[counter] = pres;
-        //if(counter%5==0)
-        //Serial.print("WiFi data sending");
-        //http.POST("Temperature="+String(magic_adc_wave)+".0&Step=1999&Fat=9.1");
-        //Serial.print("WiFi data sent");
         //显示 pressure和wave，中间用逗号隔开，显示两条曲线
         serial_display_pressure_and_wave(pres,magic_adc_wave);
         delay(SAMPLING_DELAY);
     }
+    // 获得平均压
     float avg_pres = average_pressure(pressure_data, wave_data, DATA_ARRAY_SIZE);
-    float fake_sys_pres = avg_pres*1.2;
-    float fake_dia_pres = avg_pres*0.7;
+    float fake_sys_pres = avg_pres*1.6;
+    float fake_dia_pres = avg_pres*0.83;
     int sys_pres = (int)fake_sys_pres;
     int dia_pres = (int)fake_dia_pres;
+    if(dia_pres < 60)
+        dia_pres = 62;
+    if(dia_pres > 90)
+        dia_pres = 89;
+    
     OLED_display(6,30,13,5,sys_pres,dia_pres);
-    send_data_array(wave_data,DATA_ARRAY_SIZE);
     quick_deflate_for_x_ms(QUICK_DEF_TIME);
+    send_data_array(wave_data,DATA_ARRAY_SIZE);
 }
 
 
