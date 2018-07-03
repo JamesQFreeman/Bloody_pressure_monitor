@@ -10,17 +10,19 @@
  * 
  */
 #define _SAMPLING_RATE 500
-#define DATA_ARRAY_SIZE 1
+#define _SAMPLING_TIME 2
+#define DATA_ARRAY_SIZE (_SAMPLING_RATE*_SAMPLING_TIME)
 
 #define _ADC_DELAY (1000/_SAMPLING_RATE)
+
 
 /*
  * 服务器地址
  */
 #define SERVER_ADDR "http://192.168.137.1:5000/data"
 
-float pressure_data[DATA_ARRAY_SIZE];
-
+float data[DATA_ARRAY_SIZE];
+int counter = 0;
 /*
  * 定义了ADC
  * 走I2C
@@ -37,9 +39,9 @@ Adafruit_ADS1115 ads;
 #define SIG1 1
 #define SIG2 2
 #define SIG3 3
+String s ="";
 
-
-float send_data_array(float data_array[], size_t array_size){
+float send_data_array(float data_array[]){
     WiFiMulti wifiMulti;
     // wifi setup
     for(uint8_t t = 4; t > 0; t--) {
@@ -55,14 +57,7 @@ float send_data_array(float data_array[], size_t array_size){
     Serial.println("Start to send the whole array");
     HTTPClient http;
     http.begin(SERVER_ADDR);
-    
-    DynamicJsonBuffer  jsonBuffer(4000);
-    JsonObject& root = jsonBuffer.createObject();
-    JsonArray& data = root.createNestedArray("data");
-    for(int i = 0; i<array_size; i++){
-        data.add(data_array[i]);
-    }
-    http.POST(root);
+    http.POST(s);
     http.end();
 }
 
@@ -86,12 +81,21 @@ void setup(void) {
 }
 
 
-
 void loop(void){
     int16_t adc_input0;
     adc_input0 = ads.readADC_SingleEnded(SIG0);
-    Serial.println(transfer_adc2v(adc_input0));
+    data[counter] = transfer_adc2v(adc_input0);
+    //Serial.println(transfer_adc2v(adc_input0));
     delay(_ADC_DELAY);
+    counter++;
+    if(counter==DATA_ARRAY_SIZE){
+            for(int i = 0; i < DATA_ARRAY_SIZE; i++){
+            s+=String(data[i]);
+            s+=",";
+        }
+    send_data_array(data);
+    counter = 0;
+    }
 }
 
 
