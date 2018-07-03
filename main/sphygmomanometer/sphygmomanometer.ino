@@ -30,8 +30,8 @@
  * _SAMPLING_RATE 采样率 每秒采样次数
  * _STEP_TIME 每次充气时长 ms单位
  */ 
-#define DEFLATION_TIME 10
-#define TARGET_PRESSURE 180
+#define DEFLATION_TIME 5
+#define TARGET_PRESSURE 200
 #define _SAMPLING_RATE 100
 #define _STEP_TIME 100
 #define QUICK_DEF_TIME 20000
@@ -95,7 +95,7 @@ void OLED_display(int _mon, int _day, int _hour, int _min,
     drawDateTime(_mon, _day, _hour, _min);
     drawBP(systolic,diastolic);
     u8g2.sendBuffer();          // transfer internal memory to the display
-    delay(1000);
+    delay(2000);
 }
 
 /*
@@ -421,8 +421,8 @@ float systolic_pressure(float pres[], int wave[], size_t arr_size){
 
 }
 
-
-float send_data_array(int wave[], size_t arr_size){
+/*
+float send_data_array(int sys, int dia){
     WiFiMulti wifiMulti;
     // wifi setup
     for(uint8_t t = 4; t > 0; t--) {
@@ -432,18 +432,16 @@ float send_data_array(int wave[], size_t arr_size){
     }
     wifiMulti.addAP("hotspot", "whatapwd");
     while(wifiMulti.run() != WL_CONNECTED){
+        Serial.println("TRYING TO CONNECT");
     }
     Serial.println("CONNECTED");
     Serial.println("Start to send the whole array");
     HTTPClient http;
     http.begin(SERVER_ADDR);
-    for(int i = 0; i < arr_size; i++){
-        if(i%5==0)
-            http.POST("Temperature="+String(wave[i])+".0&Step=1999&Fat=9.1");
-        delay(SAMPLING_DELAY);
-    }
+    http.POST(String(sys)+","+String(dia));
     http.end();
 }
+*/
 
 
 void setup(void) {
@@ -518,18 +516,16 @@ void loop(void){
     }
     // 获得平均压
     float avg_pres = average_pressure(pressure_data, wave_data, DATA_ARRAY_SIZE);
-    float fake_sys_pres = avg_pres*1.6;
-    float fake_dia_pres = avg_pres*0.83;
+    float fake_sys_pres = avg_pres*1.3;
+    float fake_dia_pres = avg_pres*0.63;
     int sys_pres = (int)fake_sys_pres;
     int dia_pres = (int)fake_dia_pres;
-    if(dia_pres < 60)
-        dia_pres = 62;
-    if(dia_pres > 90)
-        dia_pres = 89;
-    
-    OLED_display(6,30,13,5,sys_pres,dia_pres);
+
+    Serial.println("sys pressure is , dia pressure is \n"+String(fake_sys_pres)+String(fake_dia_pres));
+    Serial.printf("sys pressure is %d, dia pressure is %d\n",sys_pres,dia_pres);
+    OLED_display(6,30,0,4,sys_pres,dia_pres);
     quick_deflate_for_x_ms(QUICK_DEF_TIME);
-    send_data_array(wave_data,DATA_ARRAY_SIZE);
+    //send_data_array(sys_pres,dia_pres);
 }
 
 
