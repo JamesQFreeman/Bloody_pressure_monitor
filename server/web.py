@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, jsonify
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
-from time 
+import time
 import json
-
+from pylab import *
+import matplotlib.pyplot as plt
 app = Flask(__name__)
 app.config['BOOTSTRAP_SERVE_LOCAL'] = True
 Bootstrap(app)
@@ -44,15 +45,25 @@ def home(name):
 def data_get():
     global data
     if request.method == 'POST':
-        s = str(request.get_data(), encoding = 'utf-8');
-        fuck = s.split(',')
-        data = {'sys': fuck[0], 'dia': fuck[1]}
-        db_str = s+','+time.strftime
-        open('database.csv','a').write()
+        s = str(request.get_data(), encoding = 'utf-8')
+
+        l = s.split(',')
+        l = l[:1000]
+        float_l =[]
+        print('\n\n\n')
+        print(l)
+        print('\n\n\n')
+        #data = {'sys': fuck[0], 'dia': fuck[1]}
+        #db_str = s+','+time.strftime
+        for item in l:
+            float_l.append(float(item))
+        plt.plot(float_l)
+        plt.show()
+        plt.close()
+        #open('database.csv','a').write(s)
         return 'ok'
     if request.method == 'GET':
         return jsonify(data)
-
 
 if __name__ == '__main__':
     data = {'sys': 'n/a', 'dia': 'n/a'}
